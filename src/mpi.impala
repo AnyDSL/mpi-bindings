@@ -69,14 +69,13 @@ struct Communicator {
     int_t : COMM_Datatype,
     double_t : COMM_Datatype,
     init : fn() -> (i32,i32),
-    comm_size : fn() -> i32,
-    comm_rank : fn() -> i32,
+    size : fn() -> i32,
+    rank : fn() -> i32,
     send : fn(COMM_Buf, i32, COMM_Datatype, i32, i32) -> (),
     recv : fn(COMM_MutBuf, i32, COMM_Datatype, i32, i32) -> (),
     irecv : fn(COMM_MutBuf, i32, COMM_Datatype, i32, i32) -> COMM_Request,
     wait : fn(COMM_Request) -> (),
-    probe: fn(i32, i32) -> &mut COMMStatus,
-    get_count: fn(&mut COMMStatus, COMM_Datatype) -> i32,
+    get_count: fn(i32, i32, COMM_Datatype) -> i32,
     gather: fn(COMM_Buf, COMM_MutBuf, i32, COMM_Datatype, i32) -> (),
     allgather: fn(COMM_Buf, COMM_MutBuf, i32, COMM_Datatype) -> (),
     allreduce : fn(COMM_Buf, COMM_MutBuf, i32, COMM_Datatype, COMM_Op) -> (),
@@ -112,12 +111,12 @@ fn @comm() -> Communicator {
             check_status(anydsl_comm_rank(anydsl_comm_get_world(), &mut rank));
             (size,rank)
         },
-        comm_size : @|| {
+        size : @|| {
             let mut size : i32;
             check_status(anydsl_comm_size(anydsl_comm_get_world(), &mut size));
             size
         },
-        comm_rank : @|| {
+        rank : @|| {
             let mut rank : i32;
             check_status(anydsl_comm_rank(anydsl_comm_get_world(), &mut rank));
             rank
@@ -139,14 +138,11 @@ fn @comm() -> Communicator {
             let mut status : COMMStatus;
             check_status(anydsl_comm_wait(&request, &mut status as COMM_Status));
         },
-        probe: @|source, tag| {
+        get_count: @|source, tag, datatype| {
+            let mut count : i32;
             let mut status : COMMStatus;
             check_status(anydsl_comm_probe(source, tag, anydsl_comm_get_world(), &mut status as COMM_Status));
-            &mut status
-        },
-        get_count: @|status, datatype| {
-            let mut count : i32;
-            check_status(anydsl_comm_get_count(status as COMM_Status, datatype, &mut count));
+            check_status(anydsl_comm_get_count((& mut status) as COMM_Status, datatype, &mut count));
             count
         },
         gather: @|sendbuf, recvbuf, count_per_node, datatype, root| {

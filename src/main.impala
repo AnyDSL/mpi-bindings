@@ -21,8 +21,7 @@ fn main() -> i32 {
         print_string("\n");
     } else if (world_rank == 1) {
         let mut number : i32;
-        let status = comm.probe(0, 37);
-        let get_count = comm.get_count(status, comm.int_t);
+        let get_count = comm.get_count(0 ,37 , comm.int_t);
         print_string("Process 1 get_count: ");
         print_i32(get_count);
         comm.recv(&mut number as COMM_MutBuf, 1, comm.int_t, 0, 37);
@@ -135,5 +134,6 @@ fn main() -> i32 {
 
     // Finalize the comm environment.
     comm.finalize();
+    print_string("[PASSED ALL]\n");
     0
 }
